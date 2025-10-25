@@ -1,0 +1,254 @@
+---
+title: "Tablero de comando de obra"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Avance 1
+=====================================
+
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Zona del primer indicador
+
+```{r}
+plot(cars,main="Consumo de áridos", xlab="Semana", ylab="m3")
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Zona de trabajo 2
+
+```{r}
+library(ggplot2)
+
+# Crea el gráfico con los datos 'cars'
+ggplot(cars, aes(x = speed, y = dist)) +
+  # Agrega la nube de puntos
+  geom_point() +
+  # Agrega la línea de regresión lineal (lm) de color rojo
+  # 'se = FALSE' quita el sombreado gris del intervalo de confianza
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "red"
+  ) +
+  labs(
+    title = "Distancia de Frenado vs. Velocidad (Datos cars)",
+    x = "Velocidad (mph)",
+    y = "Distancia de Frenado (ft)"
+  ) +
+  theme_minimal()
+```
+
+### Zona de trabajo 3
+
+Utilizaremos la técnica para importar datos de Excel.
+
+```{r}
+library(readr)
+Prueba <- read_delim("Prueba.csv", delim = ";", 
+    escape_double = FALSE, trim_ws = TRUE)
+Prueba
+```
+
+
+
+
+```{r}
+# Instala la librería plotly si no la tienes
+# install.packages("plotly")
+
+library(plotly)
+library(dplyr) # Útil para manejar data frames
+
+# 1. Crear el data frame con los costos
+datos_costos <- data.frame(
+  Variable = c("Materiales", "Mano de Obra", "Combustibles", "Maquinarias", "Mantenimiento"),
+  Costo = c(500, 250, 100, 300, 150)
+)
+
+#datos_costos = data.frame(Prueba)
+
+
+
+# 2. Calcular el porcentaje para las etiquetas (opcional, pero útil)
+datos_costos <- datos_costos %>%
+  mutate(Porcentaje = round(Costo / sum(Costo) * 100, 1))
+
+# 3. Crear el gráfico de pastel interactivo con plotly
+plot_ly(datos_costos,
+        labels = ~Variable,
+        values = ~Costo,
+        type = 'pie',
+        # Configurar el texto que aparece sobre la sección
+        textinfo = 'label+percent',
+        # Configurar el texto que aparece al pasar el ratón (tooltip)
+        hovertemplate = "Variable: %{label}<br>Costo: $%{value}<br>Porcentaje: %{percent}<extra></extra>"
+        ) %>%
+  layout(title = 'Distribución de Costos Semanales de Obra')
+```
+
+Seguridad
+=====================================
+
+
+
+
+
+Column {data-width=300}
+-----------------------------------------------------------------------
+
+### Zona del cuarto indicador
+
+```{r}
+valueBox(230, caption = "Días sin accidentes", icon = "fa-solid fa-person-falling-burst")
+```
+
+Column {data-width=700}
+-----------------------------------------------------------------------
+
+### Zona de trabajo 2
+
+Grado de avance semanal de la obra.
+
+
+```{r}
+# Definición de la variable (puedes reemplazar este valor)
+valor_actual <- 10
+
+# 1. Definir los límites de color (colores en formato R, HEX o nombre)
+# Los límites se definen por el *inicio* de la nueva zona.
+# La estructura es: c(valor inicial, Color)
+zonas_color <- gaugeSectors(
+  success = c(80, 100), # Verde: 75 a 100 (Success)
+  warning = c(40, 79),  # Amarillo: 50 a 75 (Warning)
+  danger = c(0, 39)    # Rojo: 0 a 50 (Danger)
+)
+
+# 2. Crear el manómetro
+gauge(
+  value = valor_actual,  # El valor que se va a mostrar (ej. 65)
+  min = 0,
+  max = 100,
+  label = "Nivel Actual", # Etiqueta debajo del valor
+  sectors = zonas_color,
+  symbol = "%" # Unidad opcional
+)
+```
+
+### Zona de trabajo 3
+
+```{r}
+# Instalar y cargar la librería ggplot2 si aún no lo has hecho
+# install.packages("ggplot2")
+# install.packages("dplyr") # Para la manipulación de datos (opcional, pero útil)
+library(ggplot2)
+library(dplyr)
+
+# 1. Crear los datos
+meses <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+           "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+
+# Avance Teórico (100/12 = 8.3333...)
+avance_teorico <- rep(100/12, 12)
+
+# Avance Real (ajustado para tener 12 valores, el último valor es 0%)
+avance_real <- c(11, 5, 7, 13, 9, 16, 8, 10, 6, 3, 0, 0)
+
+# 2. Crear un Data Frame inicial
+datos_obra <- data.frame(
+  Mes = factor(meses, levels = meses), # Asegura el orden correcto de los meses
+  Teorico = avance_teorico,
+  Real = avance_real
+)
+
+# 3. Transformar los datos a formato "largo" para ggplot2 (usando tidyr::pivot_longer o reshape2::melt)
+# Usaremos dplyr y tidyr, asumiendo que están instalados (o puedes usar la función `gather` si usas solo `tidyr`)
+library(tidyr) 
+datos_long <- datos_obra %>%
+  pivot_longer(
+    cols = c("Teorico", "Real"),
+    names_to = "Tipo_Avance",
+    values_to = "Porcentaje"
+  )
+
+# 4. Crear el gráfico de barras agrupado con ggplot2
+ggplot(datos_long, aes(x = Mes, y = Porcentaje, fill = Tipo_Avance)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("Teorico" = "skyblue", "Real" = "darkgreen"),
+                    labels = c("Teorico" = "Avance Teórico (%)", "Real" = "Avance Real (%)")) +
+  labs(title = "Gráfico de Avance de Obra: Teórico vs. Real",
+       x = "Mes del Año",
+       y = "Porcentaje de Avance (%)",
+       fill = "Tipo de Avance") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotar etiquetas del eje X para mejor lectura
+```
+
+Documentación
+=====================================
+
+
+
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Habilitaciones municipales
+En esta sección presentamose el listado de los trámites presentados a la municipalidad que aún no están aprobados.
+```{r}
+
+library(ggplot2)
+library(dplyr)
+# Datos de ejemplo
+dias <- 1:10
+trabajo_total <- 100
+trabajo_realizado <- c(0, 10, 20, 30, 40, 50, 60, 70, 85, 100)
+trabajo_restante <- trabajo_total - trabajo_realizado
+trabajo_ideal <- trabajo_total - (trabajo_total / max(dias)) * dias
+
+df <- data.frame(
+  Día = dias,
+  Real = trabajo_restante,
+  Ideal = trabajo_ideal
+)
+
+# Gráfico
+ggplot(df, aes(x = Día)) +
+  geom_line(aes(y = Real, color = "Real"), size = 1.2) +
+  geom_line(aes(y = Ideal, color = "Ideal"), linetype = "dashed", size = 1.2) +
+  labs(title = "Gráfico Burndown",
+       x = "Día del Sprint",
+       y = "Trabajo Pendiente",
+       color = "Línea") +
+  theme_minimal()
+
+```
+
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Planos proyecto ejecutivo
+
+```{r}
+
+```
+
+### Zona de trabajo 3
+
+```{r}
+
+```
