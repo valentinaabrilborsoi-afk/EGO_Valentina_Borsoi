@@ -392,7 +392,7 @@ Row
 
 ### Presupuesto de obra por tarea
 
-```{r burbujas-costos-corregido-final, fig.width=5, fig.height=7, cache=FALSE}
+```{r burbujas-costos-corregido-final, fig.width=5, fig.height=8, cache=FALSE}
 # Cargar librerías
 library(ggplot2)
 library(dplyr)
@@ -469,7 +469,7 @@ ggplotly(p_burbujas, tooltip = "text") %>%
 
 ### Materiales más incidentes en costo por tarea
 
-```{r costos-materiales-final-sin-herramientas, fig.width=9, fig.height=5, cache=FALSE}
+```{r costos-materiales-final-sin-herramientas, fig.width=9, fig.height=4, cache=FALSE}
 # Cargar librerías
 library(ggplot2)
 library(dplyr)
@@ -572,7 +572,7 @@ p_columnas <- ggplot(df_materiales,
 ggplotly(p_columnas, tooltip = "text") %>%
   layout(
     xaxis = list(title = "", tickangle = 30),
-    yaxis = list(title = "Incidencia en el Costo Total de la Obra (%)"),
+    yaxis = list(title = "Incidencia Costo Obra (%)"),
     showlegend = TRUE
   )
 ```
