@@ -10,22 +10,17 @@ output:
 library(flexdashboard)
 ```
 
-Avance 1
-=====================================
+# Materiales
 
+## Column {data-width="250\""}
 
-
-Column {data-width=650}
------------------------------------------------------------------------
-
-### Zona del primer indicador
+### Zona de trabajo 1
 
 ```{r}
 plot(cars,main="Consumo de áridos", xlab="Semana", ylab="m3")
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
+## Column {data-width="250"}
 
 ### Zona de trabajo 2
 
@@ -44,9 +39,9 @@ ggplot(cars, aes(x = speed, y = dist)) +
     color = "red"
   ) +
   labs(
-    title = "Distancia de Frenado vs. Velocidad (Datos cars)",
-    x = "Velocidad (mph)",
-    y = "Distancia de Frenado (ft)"
+    title =    "Tiempo de Ejecución vs. Riesgo y Costo",
+    x = "Ritmo de obra (días)",
+    y = "Consecuencias de errores de obra (ft)"
   ) +
   theme_minimal()
 ```
@@ -62,8 +57,7 @@ Prueba <- read_delim("Prueba.csv", delim = ";",
 Prueba
 ```
 
-
-
+### Zona de trabajo 4
 
 ```{r}
 # Instala la librería plotly si no la tienes
@@ -99,33 +93,49 @@ plot_ly(datos_costos,
   layout(title = 'Distribución de Costos Semanales de Obra')
 ```
 
-Seguridad
-=====================================
+# Obra
 
+## Column {data-width="300"}
 
-
-
-
-Column {data-width=300}
------------------------------------------------------------------------
-
-### Zona del cuarto indicador
+### Zona A
 
 ```{r}
-valueBox(230, caption = "Días sin accidentes", icon = "fa-solid fa-person-falling-burst")
+valueBox(230, caption = "Días sin accidentes", icon = "fa-solid fa-person-falling-burst", color = "lightblue")
 ```
 
-Column {data-width=700}
------------------------------------------------------------------------
+### Zona B
 
-### Zona de trabajo 2
+```{r}
+valueBox(160, caption = "Horas de trabajo mensuales", icon = "fa-solid fa-user", color = "grey")
+```
+
+### Zona C
+
+```{r}
+valueBox(8, caption = "Semanas restantes para entrega de obra", icon = "fa-solid fa-eye", color = "yellow")
+```
+
+### Zona D
+
+```{r}
+valueBox(3, caption = "Chequeos pendientes", icon = "fa-solid fa-list", color = "orange")
+```
+
+### Zona E
+
+```{r}
+valueBox(9, caption = "De 10 Tareas semanales finalizadas", icon = "fa-solid fa-check", color = "green")
+```
+
+## Column {data-width="700"}
+
+### Avance semanal de obra
 
 Grado de avance semanal de la obra.
 
-
 ```{r}
 # Definición de la variable (puedes reemplazar este valor)
-valor_actual <- 10
+valor_actual <- 85
 
 # 1. Definir los límites de color (colores en formato R, HEX o nombre)
 # Los límites se definen por el *inicio* de la nueva zona.
@@ -147,16 +157,18 @@ gauge(
 )
 ```
 
-### Zona de trabajo 3
+### Avance total de obra
 
 ```{r}
-# Instalar y cargar la librería ggplot2 si aún no lo has hecho
-# install.packages("ggplot2")
-# install.packages("dplyr") # Para la manipulación de datos (opcional, pero útil)
+# Instalar y cargar librerías
+# install.packages(c("ggplot2", "dplyr", "tidyr", "plotly"))
 library(ggplot2)
 library(dplyr)
+library(tidyr)
+library(plotly)
 
-# 1. Crear los datos
+# --- 1. Preparación de Datos (Igual que antes) ---
+
 meses <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
 
@@ -166,16 +178,14 @@ avance_teorico <- rep(100/12, 12)
 # Avance Real (ajustado para tener 12 valores, el último valor es 0%)
 avance_real <- c(11, 5, 7, 13, 9, 16, 8, 10, 6, 3, 0, 0)
 
-# 2. Crear un Data Frame inicial
+# Crear Data Frame
 datos_obra <- data.frame(
-  Mes = factor(meses, levels = meses), # Asegura el orden correcto de los meses
+  Mes = factor(meses, levels = meses), 
   Teorico = avance_teorico,
   Real = avance_real
 )
 
-# 3. Transformar los datos a formato "largo" para ggplot2 (usando tidyr::pivot_longer o reshape2::melt)
-# Usaremos dplyr y tidyr, asumiendo que están instalados (o puedes usar la función `gather` si usas solo `tidyr`)
-library(tidyr) 
+# Transformar a formato "largo"
 datos_long <- datos_obra %>%
   pivot_longer(
     cols = c("Teorico", "Real"),
@@ -183,72 +193,526 @@ datos_long <- datos_obra %>%
     values_to = "Porcentaje"
   )
 
-# 4. Crear el gráfico de barras agrupado con ggplot2
-ggplot(datos_long, aes(x = Mes, y = Porcentaje, fill = Tipo_Avance)) +
+# --- 2. Crear el Gráfico Estático con ggplot2 ---
+
+p_estatico <- ggplot(datos_long, aes(x = Mes, y = Porcentaje, fill = Tipo_Avance, 
+                                     # Texto para la interactividad de plotly
+                                     text = paste("Mes: ", Mes, 
+                                                  "<br>Tipo: ", Tipo_Avance,
+                                                  "<br>Avance: ", round(Porcentaje, 2), "%"))) + 
   geom_bar(stat = "identity", position = "dodge") +
-  scale_fill_manual(values = c("Teorico" = "skyblue", "Real" = "darkgreen"),
+  scale_fill_manual(values = c("Teorico" = "skyblue", "Real" = "red"),
                     labels = c("Teorico" = "Avance Teórico (%)", "Real" = "Avance Real (%)")) +
-  labs(title = "Gráfico de Avance de Obra: Teórico vs. Real",
+  labs(title = "Gráfico Interactivo de Avance de Obra: Teórico vs. Real",
        x = "Mes del Año",
        y = "Porcentaje de Avance (%)",
        fill = "Tipo de Avance") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) # Rotar etiquetas del eje X para mejor lectura
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# --- 3. Convertir a Interactivo con plotly ---
+
+ggplotly(p_estatico, tooltip = "text")
 ```
 
-Documentación
-=====================================
+# Gestión
 
+## Column {data-width="600"}
 
+### Avance por tareas
 
+```{r avance-apilado-interactivo-final, fig.width=9, fig.height=5, cache=FALSE}
+# Configuración del chunk con cache=FALSE para asegurar la re-ejecución
 
-
-Column {data-width=650}
------------------------------------------------------------------------
-
-### Habilitaciones municipales
-En esta sección presentamose el listado de los trámites presentados a la municipalidad que aún no están aprobados.
-```{r}
-
+# Cargar librerías
 library(ggplot2)
 library(dplyr)
-# Datos de ejemplo
-dias <- 1:10
-trabajo_total <- 100
-trabajo_realizado <- c(0, 10, 20, 30, 40, 50, 60, 70, 85, 100)
-trabajo_restante <- trabajo_total - trabajo_realizado
-trabajo_ideal <- trabajo_total - (trabajo_total / max(dias)) * dias
+library(tidyr)
+library(plotly) 
 
-df <- data.frame(
-  Día = dias,
-  Real = trabajo_restante,
-  Ideal = trabajo_ideal
+# --- 1. Definir los Datos ---
+tareas <- c("Replanteo", "Hormigonado", "Mampostería", "Contrapisos", 
+            "Revoques", "Yesos", "Revestimientos", "Cielorrasos", 
+            "Carpinterías", "Terminaciones")
+
+avance_esperado <- c(100, 85, 90, 75, 60, 45, 30, 20, 10, 5)
+avance_real <- c(95, 80, 75, 70, 50, 40, 25, 15, 5, 0)
+
+# --- 2. Crear y Transformar el Data Frame ---
+df_avance <- data.frame(
+  Tarea = factor(tareas, levels = tareas), 
+  Esperado = avance_esperado,
+  Real = avance_real
 )
 
-# Gráfico
-ggplot(df, aes(x = Día)) +
-  geom_line(aes(y = Real, color = "Real"), size = 1.2) +
-  geom_line(aes(y = Ideal, color = "Ideal"), linetype = "dashed", size = 1.2) +
-  labs(title = "Gráfico Burndown",
-       x = "Día del Sprint",
-       y = "Trabajo Pendiente",
-       color = "Línea") +
-  theme_minimal()
+df_long <- df_avance %>%
+  mutate(
+    Esperado_Restante = 100 - Esperado,
+    Real_Restante = 100 - Real
+  ) %>%
+  pivot_longer(
+    cols = c(Esperado, Real, Esperado_Restante, Real_Restante),
+    names_to = c("Tipo", "Estado"),
+    names_sep = "_",
+    values_to = "Porcentaje"
+  ) %>%
+  filter(Tipo %in% c("Esperado", "Real")) %>%
+  mutate(
+    Condicion = case_when(
+      Estado == "Restante" ~ "Pendiente",
+      TRUE ~ "Ejecutado"
+    ),
+    # ***** 1. CAMBIO CLAVE: Ordenar el factor Condicion *****
+    # Ejecutado va primero para que aparezca a la izquierda de la barra
+    Condicion = factor(Condicion, levels = c("Ejecutado", "Pendiente")) 
+  )
 
+# --- 3. Generar el Gráfico Estático con ggplot2 ---
+p_estatico <- ggplot(df_long, aes(x = Tarea, y = Porcentaje, fill = Condicion)) +
+  
+  # Añadir la información de texto para la interactividad
+  aes(text = paste0("Tarea: ", Tarea, 
+                    "<br>Avance: ", Tipo, 
+                    "<br>Estado: ", Condicion,
+                    "<br>Valor: ", Porcentaje, "%")) + 
+  
+  # A. Barras del Avance ESPERADO (con transparencia, barra inferior)
+  geom_bar(data = df_long %>% filter(Tipo == "Esperado"), 
+           stat = "identity", 
+           position = "stack", 
+           width = 0.4, 
+           alpha = 0.5) + 
+  
+  # B. Barras del Avance REAL (Opaco, barra superior)
+  geom_bar(data = df_long %>% filter(Tipo == "Real"), 
+           stat = "identity", 
+           position = "stack", 
+           width = 0.4, 
+           alpha = 1.0, 
+           color = "black", 
+           size = 0.2) +
+  
+  # C. Configuración de Escalas y Ejes
+  scale_fill_manual(
+      # ***** 2. CAMBIO CLAVE: Asegurar que los colores sigan el orden del factor *****
+      # El orden aquí es (Ejecutado, Pendiente) para que Ejecutado sea el color azul
+      values = c("Ejecutado" = "#0072B2", "Pendiente" = "lightgrey"),
+      limits = c("Ejecutado", "Pendiente") 
+  ) +
+  scale_y_continuous(labels = scales::percent_format(scale = 1)) +
+  
+  labs(title = "Avance de Obra: Real vs. Esperado por Tarea (Interactivo)",
+       subtitle = "El avance real (color sólido) se compara con el esperado (sombreado)",
+       x = NULL,
+       y = "Avance de la Tarea",
+       fill = "Estado") +
+  
+  # D. Temas y Rotación
+  theme_minimal() +
+  coord_flip() 
+
+# --- 4. Convertir a Gráfico Interactivo con plotly ---
+ggplotly(p_estatico, tooltip = "text") %>% 
+  layout(showlegend = TRUE)
 ```
 
 
-Column {data-width=350}
+## Column {data-width="400"}
+
+### Estado de obra
+
+![Avance a Octubre 2025](1679434757708.jpg){width="72%"}
+
+Foto del estado actual de la obra.
+
+```{r}
+
+```
+
+### Rendimiento
+
+```{r radar-kpis, fig.width=6, fig.height=6}
+library(fmsb)
+library(dplyr)
+
+# --- 1. Definir los Datos y KPIs ---
+set.seed(42)
+
+rendimiento_real <- data.frame(
+  Tiempo = 86,  # Usando los valores de tu imagen
+  Costo = 64,   # Usando los valores de tu imagen
+  Calidad = 80, # Usando los valores de tu imagen
+  Seguridad = 84, # Usando los valores de tu imagen
+  Recursos = 85,  # Usando los valores de tu imagen
+  row.names = "Proyecto Real"
+)
+
+# --- 2. Preparar el Data Frame para fmsb ---
+df_max <- data.frame(Tiempo=100, Costo=100, Calidad=100, Seguridad=100, Recursos=100, row.names="Máximo")
+df_min <- data.frame(Tiempo=0, Costo=0, Calidad=0, Seguridad=0, Recursos=0, row.names="Mínimo")
+datos_radar <- bind_rows(df_max, df_min, rendimiento_real)
+
+# ELIMINAR O COMENTAR la línea que imprime la tabla, para que no interfiera
+# print(datos_radar) 
+
+# --- 3. Generar el Gráfico Radial ---
+
+# Definición de colores y transparencia
+colores_radar <- rgb(255/255, 105/255, 180/255, 0.4) 
+
+# Generar el gráfico de araña
+radarchart( 
+  datos_radar,
+  pcol = "deeppink",             
+  pfcol = colores_radar,         
+  plwd = 2,                      
+  plty = 1,                      
+  cglcol = "grey",               
+  cglty = 1,                     
+  axislabcol = "grey",           
+  caxislabels = seq(0, 100, 25), 
+  vlcex = 0.8                    
+)
+
+# Agregar título. Usaremos mtext() en lugar de title() para mayor control sobre la posición.
+# Si el título sigue muy alto, puedes bajar el valor de 'line'
+mtext("Análisis de Rendimiento KPI - Obra de Construcción", side = 3, line = 0.5, cex = 1.2, font = 2)
+
+legend("topright", 
+       legend = rownames(datos_radar)[3], 
+       bty = "n", pch = 20, col = "deeppink", 
+       text.col = "deeppink", cex = 1.2, pt.cex = 3)
+
+```
+
+# Finanzas
+
+Row
 -----------------------------------------------------------------------
 
-### Planos proyecto ejecutivo
+### Presupuesto de obra por tarea
 
-```{r}
+```{r burbujas-costos-corregido-final, fig.width=5, fig.height=7, cache=FALSE}
+# Cargar librerías
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(RColorBrewer) 
+
+# --- 1. Definir los Datos de las Tareas y Costos ---
+tareas <- c("Replanteo", "Hormigonado", "Mampostería", "Contrapisos", 
+            "Revoques", "Yesos", "Revestimientos", "Cielorrasos", 
+            "Carpinterías", "Terminaciones")
+
+porcentajes_incidencia <- c(1, 23, 8, 9, 5, 4, 12, 7, 18, 13)
+presupuesto_total <- 524672132
+
+# --- 2. Calcular el Costo Absoluto de cada Tarea ---
+df_costos <- data.frame(
+  Tarea = factor(tareas, levels = tareas), 
+  Incidencia_Porcentaje = porcentajes_incidencia
+) %>%
+  mutate(
+    Costo_Absoluto = (Incidencia_Porcentaje / 100) * presupuesto_total
+  )
+
+# Creamos una variable 'Posicion_Y' para separar las burbujas verticalmente
+df_costos <- df_costos %>%
+  mutate(Posicion_Y = rank(desc(Incidencia_Porcentaje))) 
+
+# --- 3. Generar el Gráfico de Burbujas Estático con ggplot2 ---
+p_burbujas <- ggplot(df_costos, aes(x = Tarea, 
+                                    y = Posicion_Y, 
+                                    size = Incidencia_Porcentaje, 
+                                    fill = Costo_Absoluto,       
+                                    text = paste0("Tarea: ", Tarea,
+                                                  "<br>Incidencia: ", Incidencia_Porcentaje, "%",
+                                                  "<br>Costo: $", format(Costo_Absoluto, big.mark = ".", decimal.mark = ",")))) +
+  geom_point(shape = 21, 
+             color = "black", 
+             alpha = 0.8) + 
+  
+  scale_size_continuous(range = c(5, 25)) + 
+  
+  scale_fill_gradient(low = "#ADD8E6", 
+                      high = "#191970", 
+                      name = "Costo Total ($)",
+                      labels = scales::dollar_format(prefix = "$", big.mark = ".", decimal.mark = ",")) +
+  
+  # ***** CAMBIO CLAVE: Aumentar el margen a 1.0 *****
+  ylim(min(df_costos$Posicion_Y) - 1.0, max(df_costos$Posicion_Y) + 1.0) +
+  
+  labs(title = "Incidencia en Costos de Tareas de Obra",
+       subtitle = paste0("Presupuesto Total: $", format(presupuesto_total, big.mark = ".", decimal.mark = ",")),
+       x = NULL, 
+       y = NULL, 
+       size = "Incidencia (%)") +
+  
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        axis.text.y = element_blank(), 
+        panel.grid.major.y = element_blank(), 
+        panel.grid.minor.y = element_blank()) 
+
+# --- 4. Convertir a Gráfico Interactivo con plotly ---
+ggplotly(p_burbujas, tooltip = "text") %>%
+  layout(
+    showlegend = TRUE,
+    legend = list(
+      x = 1.05, 
+      y = 0.5, 
+      title = list(text = "Costo Total")
+    )
+  )
+```
+
+
+### Materiales más incidentes en costo por tarea
+
+```{r costos-materiales-final-sin-herramientas, fig.width=9, fig.height=5, cache=FALSE}
+# Cargar librerías
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(plotly) 
+
+# --- A. Datos Globales ---
+presupuesto_total <- 524672132
+
+estructura_obra <- data.frame(
+  Tarea = c("Replanteo", "Hormigonado", "Mampostería", "Contrapisos", 
+            "Revoques", "Yesos", "Revestimientos", "Cielorrasos", 
+            "Carpinterías", "Terminaciones"),
+  Incidencia_Total = c(1, 23, 8, 9, 5, 4, 12, 7, 18, 13)
+)
+
+# Definición de los materiales por tarea (HERRAMIENTAS ELIMINADAS)
+# Los porcentajes se han redistribuido:
+mapa_materiales <- list(
+  "Replanteo"    = c("madera" = 1.0), 
+  "Hormigonado"  = c("hormigón elaborado" = 0.84, "hierro" = 0.16), 
+  "Mampostería"  = c("ladrillón" = 0.6, "cemento" = 0.2, "áridos" = 0.2), 
+  "Contrapisos"  = c("hormigón elaborado" = 0.77, "hierro" = 0.23), 
+  "Revoques"     = c("cemento" = 0.6, "áridos" = 0.4), 
+  
+  # Herramientas (35%) eliminadas. Redistribuido a Yeso (35%).
+  "Yesos"        = c("yeso" = 1.0), 
+  
+  # Herramientas (5%) eliminadas. Redistribuido a Porcelanato (4%) y Pegamento (1%).
+  "Revestimientos" = c("porcelanato" = 0.79, "pegamento" = 0.21), 
+  
+  "Cielorrasos"  = c("yeso" = 0.6, "madera" = 0.4), 
+  
+  # Herramientas (30%) eliminadas. Redistribuido a Perfiles Metálicos (30%).
+  "Carpinterías" = c("perfiles metálicos" = 1.0), 
+  
+  # Herramientas (30%) eliminadas. Redistribuido a Pintura (30%).
+  "Terminaciones"= c("pintura" = 1.0) 
+)
+
+# --- B. Procesamiento y Cálculo de Costos Detallados ---
+
+df_materiales <- estructura_obra %>%
+  rowwise() %>%
+  do({
+    tarea_actual <- .$Tarea
+    porcentaje_total <- .$Incidencia_Total
+    materiales_info <- mapa_materiales[[tarea_actual]]
+    
+    data.frame(
+      Tarea = tarea_actual,
+      Material = names(materiales_info),
+      Incidencia_Material = materiales_info * porcentaje_total,
+      stringsAsFactors = FALSE
+    )
+  }) %>%
+  ungroup() %>%
+  mutate(
+    Costo_Material = (Incidencia_Material / 100) * presupuesto_total,
+    Tarea = factor(Tarea, levels = estructura_obra$Tarea)
+  )
+
+# --- C. Definir la Paleta de Colores ---
+materiales_unicos <- unique(df_materiales$Material)
+num_colores <- length(materiales_unicos)
+
+paleta <- RColorBrewer::brewer.pal(max(3, num_colores), "Set3")[1:num_colores]
+names(paleta) <- materiales_unicos
+
+if (num_colores > 12) {
+  paleta <- scales::hue_pal()(num_colores)
+  names(paleta) <- materiales_unicos
+}
+
+# --- D. Generar el Gráfico de Columnas Apiladas (Stacked Column Chart) ---
+
+p_columnas <- ggplot(df_materiales, 
+                     aes(x = Tarea, 
+                         y = Incidencia_Material, 
+                         fill = Material,
+                         text = paste0("Tarea: ", Tarea,
+                                       "<br>Material: ", Material,
+                                       "<br>Incidencia: ", round(Incidencia_Material, 2), "%",
+                                       "<br>Costo: $", format(Costo_Material, big.mark = ".", decimal.mark = ",")))) +
+  
+  geom_bar(stat = "identity", position = "stack", width = 0.7) +
+  
+  scale_fill_manual(values = paleta) +
+  
+  labs(title = "Descomposición de Costos por Material Clave y Tarea",
+       subtitle = paste0("Presupuesto Total: $", format(presupuesto_total, big.mark = ".", decimal.mark = ",")),
+       x = NULL,
+       y = "Incidencia en el Costo Total de la Obra (%)",
+       fill = "Material") +
+  
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# --- E. Convertir a Gráfico Interactivo con plotly ---
+ggplotly(p_columnas, tooltip = "text") %>%
+  layout(
+    xaxis = list(title = "", tickangle = 30),
+    yaxis = list(title = "Incidencia en el Costo Total de la Obra (%)"),
+    showlegend = TRUE
+  )
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Certificación de obra
+
+```{r certificado-line-chart, fig.width=9, fig.height=5, cache=FALSE}
+# Cargar librerías
+library(ggplot2)
+library(dplyr)
+library(plotly)
+
+# --- 1. Definición de Datos ---
+presupuesto_total <- 524672132
+
+# Datos de Certificación Mensual (Porcentaje del Total de Obra)
+certificados_data <- data.frame(
+  Mes = c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre"),
+  Porcentaje = c(8.94, 6.80, 6.42, 6.67, 11.61, 8.03, 13.19, 12.07, 11.96, 5.76)
+)
+
+# Definir el orden correcto de los meses (Factor)
+orden_meses <- c("Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                 "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre")
+
+
+# --- 2. Preparación y Cálculo ---
+df_certificados <- certificados_data %>%
+  mutate(
+    # Calcular el monto real certificado
+    Monto_Certificado = (Porcentaje / 100) * presupuesto_total,
+    # Asegurar el orden correcto de los meses en el eje X
+    Mes = factor(Mes, levels = orden_meses)
+  )
+
+# --- 3. Generar el Gráfico de Líneas Estático con ggplot2 ---
+
+p_linea <- ggplot(df_certificados, 
+                  aes(x = Mes, 
+                      y = Monto_Certificado, 
+                      group = 1, # Necesario para asegurar una sola línea continua
+                      # Texto para el tooltip interactivo de plotly
+                      text = paste0("Mes: ", Mes, 
+                                    "<br>Monto: $", format(Monto_Certificado, big.mark = ".", decimal.mark = ","),
+                                    "<br>Incidencia: ", Porcentaje, "%"))) +
+  
+  # Línea
+  geom_line(color = "red", size = 1.2) +
+  
+  # Puntos para cada mes
+  geom_point(color = "red", size = 3, alpha = 0.8) +
+  
+  # Etiquetas de los ejes
+  labs(title = "Progresión Mensual de Certificados de Obra (2025)",
+       subtitle = paste0("Presupuesto Total: $", format(presupuesto_total, big.mark = ".", decimal.mark = ",")),
+       x = NULL,
+       y = "Monto Certificado ($)") +
+  
+  # Formatear el eje Y con formato de moneda
+  scale_y_continuous(labels = scales::dollar_format(prefix = "$", big.mark = ".", decimal.mark = ",")) +
+  
+  theme_minimal() +
+  # Rotar etiquetas del eje X para mejor lectura
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# --- 4. Convertir a Gráfico Interactivo con plotly ---
+ggplotly(p_linea, tooltip = "text") %>%
+  layout(xaxis = list(tickangle = 45))
+```
+
+### Principales proveedores
+
+```{r proveedores-anillo-explodido-pastel, fig.width=8, fig.height=7, cache=FALSE}
+# Cargar librerías
+library(plotly)
+library(dplyr)
+
+# --- 1. Definición de Datos de Proveedores ---
+df_proveedores <- data.frame(
+  Proveedor = c("Hormiserv", "Guiñazú", "Valerio Oliva", "Policuyo", 
+                "Sanchez Sillero", "Hipercerámico", "Corralón Luján"),
+  Rubro = c("Hormigón elaborado", "Materiales siderúrgicos", "Maderas", 
+            "Materiales para instalaciones varias", "Materiales de construcción en seco", 
+            "Materiales para terminaciones y equipamiento sanitario", "Áridos"),
+  Participacion = c(23, 21, 14, 15, 7, 9, 11) # Porcentaje de compras a proveedores
+)
+
+# --- 2. Preparación y Cálculo ---
+suma_total <- sum(df_proveedores$Participacion)
+
+df_anillo_plotly <- df_proveedores %>%
+  mutate(
+    Porcentaje_Display = paste0(Participacion, "%"),
+    etiqueta_tooltip = paste0("<b>Proveedor:</b> ", Proveedor, 
+                              "<br><b>Rubro:</b> ", Rubro, 
+                              "<br><b>Participación:</b> ", Participacion, "%")
+  )
+
+pull_values <- rep(0.03, nrow(df_anillo_plotly)) # Pequeña separación uniforme para todos
+
+# --- 3. Generar el Gráfico de Anillo Explodido con plotly nativo ---
+
+fig <- plot_ly(df_anillo_plotly, 
+               labels = ~Proveedor, 
+               values = ~Participacion, 
+               type = 'pie', 
+               
+               hole = 0.4, 
+               pull = pull_values, 
+               
+               textinfo = 'percent', 
+               hoverinfo = 'text',   
+               text = ~etiqueta_tooltip, 
+               
+               # ***** CAMBIO CLAVE 1: PALETA DE COLORES PASTEL *****
+               colors = "Pastel", # plotly tiene paletas predefinidas, "Pastel" es una de ellas.
+                                  # También puedes usar un vector de códigos HEX para más control.
+               
+               marker = list(line = list(color = '#FFFFFF', width = 1)), 
+               domain = list(x = c(0, 1), y = c(0, 1))) %>%
+  
+  layout(
+         # ***** CAMBIO CLAVE 2: AJUSTAR EL TÍTULO Y LOS MÁRGENES *****
+         title = list(text = "Participación de Compras por Principales Proveedores", 
+                      font = list(size = 18)), # Mantener tamaño, pero ajustar margen
+         
+         # Ajustar los márgenes del layout para dar espacio al título
+         margin = list(t = 70, b = 20, l = 20, r = 20), # Aumentar margen superior (t=top)
+         
+         legend = list(title = list(text = '<b>Proveedor y Rubro</b>')),
+         
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+
+fig
 
 ```
 
-### Zona de trabajo 3
 
-```{r}
 
-```
